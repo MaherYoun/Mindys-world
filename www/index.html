@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171827">
+  <meta name="description" content="An original little adventure, with a companion and a diary for every stop on the journey.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/sunflower-emoji.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./world.css">
+  <link rel="stylesheet" href="./globe.css">
+  <link rel="stylesheet" href="./mind.css">
+  <title>Mindy's World</title>
+  <script src="./config.js" defer></script>
+  <script src="./cloud.js" defer></script>
+  <script src="./data.js" defer></script>
+  <script src="./world3d.js" defer></script>
+  <script src="./globe.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">🌻</span><span><strong>MINDY'S WORLD</strong><small>A LITTLE GUILD, A WIDE WORLD</small></span></div>
+      <div class="top-actions">
+        <span class="save-indicator" id="saveIndicator">Saved on this device</span>
+        <button class="sync-button pause-button" id="pauseButton" type="button" aria-label="Open the What-If Lantern" title="The What-If Lantern">✦ What-If Lantern</button>
+        <button class="sync-button sound-button" id="soundButton" type="button" aria-label="Turn music off" aria-pressed="true">♫ Music on</button>
+        <button class="sync-button" id="cloudButton">Sync</button>
+        <button class="icon-button" id="settingsButton" aria-label="Journey settings" title="Journey settings">⚙</button>
+      </div>
+    </header>
+    <section id="globeScreen" class="globe-screen" aria-label="Explore the world">
+      <div class="globe-stage">
+        <div class="globe-stars" aria-hidden="true"></div>
+        <div class="globe-copy"><span class="eyebrow">MINDY'S WORLD · THE JOURNEY</span><h1>Where shall we wander?</h1><p>Turn the Earth, choose a country, then step into a city. Every journey can grow.</p><span id="globeClock" class="globe-clock"></span></div>
+        <div class="globe-viewport"><div class="globe-halo" aria-hidden="true"></div><div class="globe-orbit orbit-a" aria-hidden="true"></div><div class="globe-orbit orbit-b" aria-hidden="true"></div><canvas id="globeCanvas" aria-label="Rotatable Earth with selectable destination markers"></canvas><div id="globeFallback" class="globe-fallback" hidden aria-hidden="true"></div><canvas id="globeMarkers" aria-hidden="true"></canvas></div>
+        <div class="globe-zoom-controls" aria-label="Globe zoom"><button id="globeZoomIn" type="button" aria-label="Zoom closer">＋</button><button id="globeZoomOut" type="button" aria-label="Zoom out">−</button></div>
+        <div class="globe-tip">↕ Drag to turn in any direction · tap a light to explore · scroll or pinch to zoom</div>
+        <button id="routeIndexButton" class="globe-route-link" type="button">◇ Open route index</button>
+      </div>
+      <aside class="globe-drawer" aria-label="Countries and cities">
+        <span class="eyebrow">GUILD NAVIGATION</span><div class="globe-drawer-heading"><h2 id="globeDrawerTitle">Choose a country</h2><button id="globeAllCountries" type="button" hidden>← Countries</button></div>
+        <p id="globeDrawerCaption">Your route is here whenever you need it.</p>
+        <label class="globe-search">⌕ <input id="globeSearch" type="search" placeholder="Search countries or cities" aria-label="Search countries or cities"></label>
+        <div id="globeCountryList" class="globe-list"></div><div id="globeCityList" class="globe-list" hidden></div>
+        <button id="globeAddPlace" class="globe-add" type="button">＋ Add a country or city</button>
+      </aside>
+    </section>
+    <div class="layout" id="gameLayout" hidden>
+      <aside class="atlas-panel" id="atlasPanel" aria-label="Travel atlas">
+        <div class="panel-heading"><div><span class="eyebrow">YOUR JOURNEY</span><h2>The atlas</h2></div><button class="close-mobile" id="closeAtlas" aria-label="Close atlas">✕</button></div>
+        <p class="panel-caption">Every place has its own story. Travel in any order.</p>
+        <label class="search-field"><span aria-hidden="true">⌕</span><input type="search" id="placeSearch" placeholder="Find a place" aria-label="Find a place"></label>
+        <div class="region-filters" id="regionFilters" aria-label="Regions"></div>
+        <div class="place-list" id="placeList"></div>
+        <button class="text-action add-place" id="addPlaceButton">＋ Add a place</button>
+      </aside>
+
+      <main class="main-panel" id="mainPanel">
+        <div class="chapter-topline"><button class="menu-button" id="openAtlas" aria-label="Open atlas">☰ <span>Atlas</span></button><button id="backToGlobe" class="globe-back" type="button">◈ Back to globe</button><span id="chapterTrail">THE JOURNEY CONTINUES</span><span id="chapterCount"></span></div>
+        <div class="scene" id="scene" role="group" aria-label="Interactive story scene">
+          <canvas id="worldCanvas" class="world-canvas" aria-label="Walkable 3D fantasy city"></canvas>
+          <div class="scene-sky" id="sceneSky"></div>
+          <div class="scene-horizon" id="sceneHorizon"></div>
+          <div class="scene-landscape" id="sceneLandscape"></div>
+          <div class="sun-disc" aria-hidden="true"></div>
+          <div class="scene-vignette"></div>
+          <div class="scene-title"><span class="eyebrow" id="sceneRegion"></span><h1 id="sceneCity"></h1><p id="sceneSubtitle"></p></div>
+          <div class="petal-layer" id="petalLayer"></div>
+          <button id="worldMapButton" class="world-map-button" type="button" aria-label="Return to globe">◇ World globe</button>
+          <div class="local-radar" aria-hidden="true"><canvas id="localMiniMap" width="150" height="150"></canvas><span>GUILD RADAR</span></div>
+          <div class="world-controls-note">W/Z forward · Q left · S back · D right · hold A + move to run · E explore · M map</div>
+          <div id="movePad" class="move-pad" aria-label="Touch movement joystick"><span id="moveKnob" class="move-knob"></span></div>
+          <button id="runButton" class="run-button" type="button" aria-label="Hold A to run while moving">A<span>RUN</span></button>
+          <button id="worldInteract" class="world-interact" type="button" aria-live="polite" hidden>Explore</button>
+          <div class="scene-footer"><span class="scene-progress" id="sceneProgress"></span><button id="visitedButton" class="pill-button" aria-pressed="false">Mark visited</button></div>
+        </div>
+        <section class="story-card" aria-live="polite">
+          <div class="story-icon" aria-hidden="true">✺</div>
+          <div class="story-body"><span class="eyebrow">CHAPTER <span id="storyNumber"></span></span><h2 id="storyTitle"></h2><p id="storyText"></p><div class="story-choices" id="storyChoices"></div></div>
+        </section>
+        <div class="bottom-note"><span>✦ No deadlines. No streaks. Just places to return to.</span><button class="text-action" id="howButton">How to play ↗</button></div>
+      </main>
+
+      <aside class="memory-panel" aria-label="Companion and diary">
+        <div class="mindy-intro"><span class="eyebrow">YOUR ADVENTURER</span><h2>Mindy</h2><p>Make her look yours. This appearance travels with you to every city.</p></div>
+        <div class="mindy-card"><div id="mindyAvatar" class="mindy-avatar"></div><div><strong>Mindy</strong><p id="mindyLook"></p></div><button class="round-action" id="editMindy" type="button" aria-label="Customize Mindy's appearance">✎</button></div>
+        <div class="memory-divider"></div>
+        <div class="memory-intro"><span class="eyebrow">TRAVEL TOGETHER</span><h2>A friend for this place</h2><p>Make a companion in every city. Change them whenever you like.</p><button id="journeyButton" class="text-action" type="button">✦ See my journeys</button></div>
+        <div class="companion-card"><div class="avatar-backdrop" id="avatarBackdrop"><div id="avatarPreview" class="avatar-preview"></div></div><div class="companion-details"><div><span class="eyebrow">YOUR COMPANION</span><h3 id="companionName"></h3><p id="companionTrait"></p></div><button class="round-action" id="editCompanion" aria-label="Customize companion">✎</button></div></div>
+        <div class="memory-divider"></div>
+        <div class="diary-teaser"><div class="diary-head"><span class="eyebrow">A PAGE TO KEEP</span><span aria-hidden="true">↗</span></div><h2>Travel diary</h2><p id="diaryExcerpt">No pages for this place yet. What would you remember?</p><button class="primary-button" id="openDiary">Open diary <span aria-hidden="true">→</span></button></div>
+        <div class="small-guild-note"><span aria-hidden="true">✦</span><p id="guildNote">“You can take your time. The world is still here.”</p></div>
+      </aside>
+    </div>
+    <nav class="mobile-nav" aria-label="Main actions"><button id="mobileAtlas">⌖<span>Map</span></button><button id="mobileStory" class="active">✺<span>World</span></button><button id="mobileCompanion">◉<span>Looks</span></button><button id="mobileDiary">✎<span>Diary</span></button></nav>
+  </div>
+
+  <dialog id="companionDialog" class="modal character-modal"><div class="modal-head"><div><span class="eyebrow">THE GUILD'S MAGIC</span><h2>Create a companion</h2></div><button class="dialog-close" data-close="companionDialog" aria-label="Close">✕</button></div><p class="modal-intro">This companion belongs to <strong id="characterPlace"></strong>. Their look is yours to choose.</p><div class="character-grid"><div class="character-stage"><div id="characterPreview"></div><span id="characterPreviewName"></span></div><form id="characterForm" class="character-fields"><label>Name<input type="text" name="name" maxlength="24" autocomplete="off" placeholder="Give them a name" required></label><label>Personality<select name="trait"><option value="steady">Steady & kind</option><option value="curious">Curious & clever</option><option value="bold">Bold & warm</option><option value="playful">Playful & thoughtful</option></select></label><div class="field-row"><label>Skin tone<select name="skin"></select></label><label>Hair color<select name="hair"></select></label></div><div class="field-row"><label>Hair style<select name="style"><option value="waves">Soft waves</option><option value="short">Short</option><option value="bun">High bun</option><option value="long">Long</option></select></label><label>Eyes<select name="eyes"></select></label></div><div class="field-row"><label>Outfit<select name="outfit"></select></label><label>Accessory<select name="accessory"><option value="none">None</option><option value="scarf">Scarf</option><option value="glasses">Glasses</option><option value="flower">Flower pin</option></select></label></div><button class="primary-button" type="submit">Save companion <span aria-hidden="true">→</span></button></form></div></dialog>
+
+  <dialog id="mindyDialog" class="modal character-modal"><div class="modal-head"><div><span class="eyebrow">YOUR ADVENTURER</span><h2>Customize Mindy</h2></div><button class="dialog-close" data-close="mindyDialog" aria-label="Close">✕</button></div><p class="modal-intro">Choose Mindy's appearance. It follows her through every destination and syncs with her account.</p><div class="character-grid"><div class="character-stage"><div id="mindyCharacterPreview"></div><span>Mindy</span></div><form id="mindyForm" class="character-fields"><div class="field-row"><label>Skin tone<select name="skin"></select></label><label>Hair color<select name="hair"></select></label></div><div class="field-row"><label>Hair style<select name="style"><option value="waves">Soft waves</option><option value="short">Short</option><option value="bun">High bun</option><option value="long">Long</option></select></label><label>Eyes<select name="eyes"></select></label></div><div class="field-row"><label>Outfit<select name="outfit"></select></label><label>Accessory<select name="accessory"><option value="none">None</option><option value="scarf">Scarf</option><option value="glasses">Glasses</option><option value="flower">Flower pin</option></select></label></div><label>Build<select name="build"><option value="slim">Slim</option><option value="balanced">Balanced</option><option value="strong">Strong</option></select></label><button class="primary-button" type="submit">Save Mindy's look <span aria-hidden="true">→</span></button></form></div></dialog>
+
+  <dialog id="diaryDialog" class="modal diary-modal"><div class="modal-head"><div><span class="eyebrow">ONLY YOURS</span><h2><span id="diaryPlace"></span> diary</h2></div><button class="dialog-close" data-close="diaryDialog" aria-label="Close">✕</button></div><p class="modal-intro">Write what happened, what you felt, or nothing at all. Your pages stay on this device until you sign in to sync.</p><div class="diary-layout"><div class="entry-sidebar"><button id="newEntryButton" class="secondary-button">＋ New page</button><div id="entryList"></div></div><div class="entry-editor" id="entryEditor"><div class="empty-entry">Choose a page or start a new one.</div></div></div><p class="privacy-line">Saved automatically on this device and synced when signed in. Export a backup whenever you want a copy.</p></dialog>
+
+  <dialog id="settingsDialog" class="modal settings-modal"><div class="modal-head"><div><span class="eyebrow">MAKE IT YOURS</span><h2>Journey settings</h2></div><button class="dialog-close" data-close="settingsDialog" aria-label="Close">✕</button></div><p class="modal-intro">The route is inspired by a draft travel plan. You can add places and mark the ones you actually visited.</p><div class="account-panel"><span class="eyebrow">YOUR ACCOUNT</span><p id="accountStatus">Playing on this device</p><div class="settings-actions"><button class="secondary-button" id="accountButton">Sign in to sync</button><button class="secondary-button" id="syncNowButton" hidden>↻ Sync now</button><button class="delete-button" id="deleteAccountButton" hidden>Delete account and cloud data</button></div></div><div class="settings-actions"><button class="secondary-button" id="exportButton">↓ Export backup (.json)</button><label class="secondary-button file-button">↑ Import backup (.json)<input type="file" id="importFile" accept=".json,application/json" hidden></label><button class="secondary-button" id="settingsAddPlace">＋ Add a place</button></div><p class="privacy-line">Diary pages are stored on this device and sync to your account when signed in. Offline changes upload when you reconnect. Export a backup before clearing browser data. <a href="./privacy.html" target="_blank" rel="noopener">Privacy</a> · <a href="./delete-account.html" target="_blank" rel="noopener">Account deletion</a></p></dialog>
+
+  <dialog id="authDialog" class="modal small-modal"><div class="modal-head"><div><span class="eyebrow">ONE JOURNEY, EVERY DEVICE</span><h2 id="authTitle">Sign in to sync</h2></div><button class="dialog-close" data-close="authDialog" aria-label="Close">✕</button></div><p class="modal-intro">Use the same email and password on the web, iPhone, and Android. You can play without an account, but those pages stay on this device.</p><form id="authForm" class="character-fields"><label>Email<input name="email" type="email" autocomplete="email" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button class="primary-button" type="submit" id="authSubmit">Sign in →</button></form><p class="auth-message" id="authMessage" role="status"></p><div class="auth-links"><button class="text-action" id="authSwitch">Create an account</button><button class="text-action" id="forgotButton">Forgot password?</button></div></dialog>
+
+  <dialog id="addPlaceDialog" class="modal small-modal"><div class="modal-head"><div><span class="eyebrow">ANOTHER STOP</span><h2>Add a place</h2></div><button class="dialog-close" data-close="addPlaceDialog" aria-label="Close">✕</button></div><form id="addPlaceForm" class="character-fields"><label>City or place<input name="city" maxlength="48" required placeholder="e.g. Kyoto"></label><label>Country<input name="country" maxlength="48" required placeholder="e.g. Japan"></label><label>Region<select name="region" id="addRegion"></select></label><button class="primary-button" type="submit">Add to atlas →</button></form></dialog>
+  <dialog id="whatIfDialog" class="modal what-if-modal"><div class="modal-head"><div><span class="eyebrow">A QUIET GUILD MOMENT</span><h2>The What-If Lantern</h2></div><button class="dialog-close" data-close="whatIfDialog" aria-label="Close lantern">✕</button></div><p class="modal-intro">A thought can be loud without being a prediction. Take one small moment; there is no score, timer, or perfect answer.</p><div class="lantern-art" id="lanternArt" aria-hidden="true"><span>✦</span><i></i><i></i><i></i></div><span id="whatIfStageLabel" class="eyebrow">A THOUGHT</span>
+    <section id="whatIfName" class="lantern-step"><h3>What is circling in your mind?</h3><p>You can name it briefly or leave this blank.</p><textarea id="whatIfThought" maxlength="240" placeholder="What if…" aria-label="A thought you want to pause"></textarea><button id="whatIfBegin" class="primary-button" type="button">Take a breath →</button></section>
+    <section id="whatIfGround" class="lantern-step" hidden><h3>Find this moment</h3><p>Tap each petal when you notice one ordinary thing around you. Nothing needs to be impressive.</p><div class="sense-petals"><button id="groundSee" type="button" aria-pressed="false">🌻 Something I see</button><button id="groundHear" type="button" aria-pressed="false">🌻 Something I hear</button><button id="groundFeel" type="button" aria-pressed="false">🌻 Something I feel</button></div><button id="whatIfGroundNext" class="primary-button" type="button" disabled>Continue →</button></section>
+    <section id="whatIfChoice" class="lantern-step" hidden><h3>What is in your hands today?</h3><p>Either answer is enough. You can always come back later.</p><div class="lantern-choices"><button id="whatIfSmall" type="button">✦ One small step I can take</button><button id="whatIfRelease" type="button">☁ Nothing to solve right now</button></div></section>
+    <section id="whatIfAction" class="lantern-step" hidden><h3>Choose the smallest next step</h3><p>Make it something kind and possible, even if it takes only a minute.</p><textarea id="whatIfStepInput" maxlength="200" placeholder="One small step…" aria-label="One small step"></textarea><button id="whatIfLight" class="primary-button" type="button">Light the lantern →</button></section>
+    <section id="whatIfResult" class="lantern-step" hidden aria-live="polite"><h3>The lantern is lit</h3><p id="whatIfResultText"></p><div class="lantern-choices"><button id="whatIfDiary" type="button" hidden>Keep this in this city's diary</button><button id="whatIfAgain" type="button">Start again</button></div></section><p class="privacy-line">Your words stay in this moment unless you choose to keep them in a city's diary.</p>
+  </dialog>
+  <dialog id="journeyDialog" class="modal journey-modal"><div class="modal-head"><div><span class="eyebrow">THE JOURNEY GALLERY</span><h2>Places you've been</h2></div><button class="dialog-close" data-close="journeyDialog" aria-label="Close gallery">✕</button></div><p class="modal-intro">Your visited stops and memories live here. A place is shown as visited only when you mark it yourself.</p><div id="journeySummary" class="journey-summary"></div><div id="journeyCards" class="journey-cards"></div><button id="journeyMapButton" class="secondary-button" type="button">Explore the world map ↗</button></dialog>
+  <dialog id="helpDialog" class="modal small-modal"><div class="modal-head"><div><span class="eyebrow">A LITTLE GUIDE</span><h2>How to play</h2></div><button class="dialog-close" data-close="helpDialog" aria-label="Close">✕</button></div><div class="help-copy"><p>Drag or swipe the globe in the direction you want it to move, including down over the poles. Scroll, pinch, or use + and − to zoom in close. Choose a country, then a city from its lights or the list. The sunlit and night sides follow your device clock and date.</p><p>Open the guild world map to pan and zoom around a stylized Earth with glowing destinations. Use W or Z to walk forward, S back, Q or the left arrow to move left, and D right. Hold A while moving to run. On a phone, move with the joystick and hold A Run. Drag to turn the camera. Approach a glowing sunflower shrine and press E or Explore to gather its petal.</p><p>Change Mindy's look from the companion panel. Walk past the sunflower path and orange trees to the journey gallery to see the places you marked visited. Tap What-If Lantern whenever your thoughts feel crowded. Name a thought if you wish, notice three things around you, and choose a small step or let the thought rest. Nothing is scored or saved unless you choose to keep it in the diary.</p><p>Walk to the portal or press M for the map, the pavilion for the diary, or the bench to customize your companion. Find three petals to unlock the chapter choices. There are no losing choices, deadlines, or streaks.</p></div></dialog>
+  <dialog id="worldMapDialog" class="modal world-map-modal"><div class="modal-head"><div><span class="eyebrow">YOUR PATH, YOUR PACE</span><h2>The guild world map</h2></div><button class="dialog-close" data-close="worldMapDialog" aria-label="Close map">✕</button></div><p class="modal-intro">Drag and zoom the illustrated world, or choose from the list. The coastlines follow Earth; some city pins are approximate.</p><div class="world-map-layout"><div class="map-board"><img id="earthMapImage" src="./assets/earth-game-map.webp" alt="Stylized game map with Earth's continents" draggable="false" hidden><canvas id="atlasMapCanvas" aria-label="Zoomable game map with glowing destination markers"></canvas><div class="map-zoom-controls" aria-label="Map zoom"><button id="mapZoomIn" type="button" aria-label="Zoom map in">＋</button><button id="mapZoomOut" type="button" aria-label="Zoom map out">−</button><button id="mapReset" type="button" aria-label="Reset map view">⌖</button></div><span class="map-key">✦ current place &nbsp; ● visited &nbsp; ◇ discover &nbsp; · drag / pinch / scroll</span></div><div class="map-sidebar"><label class="map-search-label">Find a place<input id="mapSearch" type="search" placeholder="City or country"></label><div id="mapRegions" class="map-regions"></div><div id="mapPlaceList" class="map-place-list"></div><button id="mapAddPlace" class="secondary-button" type="button">＋ Add a place</button></div></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <audio id="adventureMusic" src="./assets/adventure-loop.mp3" loop preload="none"></audio>
+</body>
+</html>
