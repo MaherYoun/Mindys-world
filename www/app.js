@@ -206,6 +206,7 @@
       soundOn:()=>musicEnabled,
       onExit:()=>closeOpenWorld(),
       onEnterPlace:id=>{closeOpenWorld("none");selectPlace(id);toast(`Welcome to ${place().city}.`);},
+      onTravel:id=>{if(places().some(p=>p.id===id)){state.selected=id;activeRegion=place().region;save();}},
       onDiary:id=>{if(state.selected!==id){state.selected=id;activeRegion=place().region;save();renderAll();}openDiary();}
     });}catch(error){console.warn("Open world unavailable.",error);openWorldFailed=true;closeOpenWorld();toast("The open world needs WebGL on this device.");return;}
     openWorld.open({places:places(),scope,visited:{...state.visited},currentId:start,mindy:state.mindy,companion:id=>state.companions[id]||defaultCompanion(id),diaryCount:id=>state.diaries[id]?.length||0});

@@ -4,6 +4,7 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { TAU, clamp, lerp, smoothstep, angleLerp, rng, hash, pick, makeTextures, Humanoid, randomLook, makeCar, CAR_COLORS } from "./ow-assets.js";
 import { planWorld, World } from "./ow-world.js";
+import { TravelGlobe } from "./ow-globe.js";
 
 const SAVE_KEY = "mindys-openworld-v1";
 const SKY = [[-.4, "#02040b", "#070d1d", "#05070d"], [-.14, "#0c1433", "#272a52", "#0b0d16"], [-.03, "#24326a", "#c56a5f", "#1a1a24"], [.05, "#3a5aa0", "#ffad78", "#3a3a40"], [.16, "#3b73c0", "#ffd6a8", "#5a5a5a"], [.38, "#2f70c6", "#acd3ef", "#6a6f75"], [1, "#2766bb", "#bcdff5", "#6a6f75"]];
@@ -106,6 +107,7 @@ export class MindyOpenWorld {
           <div class="ow-map-list"></div>
         </aside>
       </div>
+      <div class="ow-globe-host" hidden></div>
       <div class="ow-loading"><div class="ow-loading-card"><span class="ow-eyebrow">MINDY'S WORLD</span><h2>Building Mindy's world…</h2><div class="ow-bar"><i></i></div><p class="ow-loading-tip">Every stop on her journey becomes a city, placed where it really is and joined by highways. Visited cities are marked with a ✓.</p></div></div>
       <div class="ow-help" hidden><div class="ow-help-card">
         <span class="ow-eyebrow">HOW TO PLAY</span><h2>Explore Mindy's world</h2>
@@ -114,11 +116,11 @@ export class MindyOpenWorld {
           <div>hold <kbd>A</kbd> or <kbd>Shift</kbd></div><div>Run · nitro boost when driving</div>
           <div><kbd>Space</kbd></div><div>Jump · handbrake drift</div>
           <div><kbd>F</kbd></div><div>Get in or out of a car</div>
-          <div><kbd>E</kbd></div><div>Enter a guild portal · open the diary kiosk</div>
+          <div><kbd>E</kbd></div><div>Open the journey navigator at a portal · open the diary kiosk</div>
           <div><kbd>M</kbd> <kbd>T</kbd> <kbd>H</kbd></div><div>Map &amp; GPS · skip time · horn</div>
           <div>Drag / scroll</div><div>Look around · zoom the camera</div>
         </div>
-        <p>Every city is a stop on Mindy's journey; the ones she has visited are marked ✓. Find the 3 golden sunflowers hidden in every city, and step through a portal to visit that city's guild district.</p>
+        <p>Every city is a stop on Mindy's journey; the ones she has visited are marked ✓. Find the 3 golden sunflowers hidden in every city. Step into any glowing portal to open the journey navigator and travel to any city on her trip.</p>
         <button class="ow-primary" data-act="closehelp">Let's go →</button>
       </div></div>`;
     this.canvas = this.$(".ow-canvas"); this.mini = this.$(".ow-mini canvas"); this.miniCtx = this.mini.getContext("2d");
@@ -142,7 +144,7 @@ export class MindyOpenWorld {
     const map = { w: "fwd", z: "fwd", arrowup: "fwd", s: "back", arrowdown: "back", q: "left", arrowleft: "left", d: "right", arrowright: "right", a: "run", shift: "run", " ": "jump", e: "use", f: "car", m: "map", t: "time", h: "horn", escape: "esc" };
     const keyOf = e => map[e.key?.toLowerCase()] || ({ KeyW: "fwd", KeyS: "back", KeyD: "right", Space: "jump", ShiftLeft: "run", ShiftRight: "run" })[e.code];
     this.onKeyDown = e => {
-      if (!this.running || this.blocked()) return; const k = keyOf(e); if (!k) return; e.preventDefault();
+      if (!this.running || this.blocked() || this.globeOpen) return; const k = keyOf(e); if (!k) return; e.preventDefault();
       if (e.repeat) return; this.keys.add(k); this.sfx.ensure();
       if (k === "use") this.use(); if (k === "car") this.toggleCar(); if (k === "map") this.toggleMap(); if (k === "time") this.action("time"); if (k === "horn") this.sfx.horn();
       if (k === "esc") { if (!this.$(".ow-mapview").hidden) this.toggleMap(false); else if (!this.$(".ow-help").hidden) this.action("closehelp"); }
@@ -479,7 +481,7 @@ export class MindyOpenWorld {
   }
   use() {
     const it = this.nearest(); if (!it) return;
-    if (it.type === "portal") { this.sfx.tone([523, 659, 784, 1046], .4, "sine", .08); this.opts.onEnterPlace?.(it.district.id); }
+    if (it.type === "portal") this.openGlobe();
     if (it.type === "diary") this.opts.onDiary?.(it.district.id);
   }
   updateCollectibles(dt) {
@@ -618,16 +620,35 @@ export class MindyOpenWorld {
   }
   selectOnMap(d) {
     this.mapSel = d; const card = this.$(".ow-map-card"), pages = this.config.diaryCount?.(d.id) || 0; card.hidden = false;
-    card.innerHTML = `<strong></strong><small></small><div class="ow-map-actions"><button data-m="gps">★ Set GPS route</button><button data-m="travel">⇢ Fast travel</button><button data-m="enter">✦ Enter guild district</button></div>`;
+    card.innerHTML = `<strong></strong><small></small><div class="ow-map-actions"><button data-m="gps">★ Set GPS route</button><button data-m="travel">⇢ Fast travel</button><button data-m="enter">◎ Journey navigator</button></div>`;
     card.querySelector("strong").textContent = d.place.city; card.querySelector("small").textContent = `${d.place.country} · ${d.visited ? "Visited ✓" : "On the journey"} · ${pages} diary ${pages === 1 ? "page" : "pages"}`;
     card.querySelector('[data-m="gps"]').addEventListener("click", () => { this.setTarget(d); this.computeRoute(); this.drawMap(); this.toggleMap(false); });
     card.querySelector('[data-m="travel"]').addEventListener("click", () => { this.toggleMap(false); this.fastTravel(d); });
-    card.querySelector('[data-m="enter"]').addEventListener("click", () => { this.toggleMap(false); this.opts.onEnterPlace?.(d.id); });
+    card.querySelector('[data-m="enter"]').addEventListener("click", () => { this.toggleMap(false); this.openGlobe(); });
     this.drawMap();
   }
   fastTravel(d) {
     const fade = this.$(".ow-loading"); fade.hidden = false; fade.classList.add("ow-fade"); this.$(".ow-loading h2").textContent = `Travelling to ${d.place.city}…`;
     setTimeout(() => { this.spawnAt(d.id); if (this.target === d) this.setTarget(null); fade.hidden = true; fade.classList.remove("ow-fade"); }, 700);
+  }
+
+  /* ---------------- Journey navigator ---------------- */
+  openGlobe() {
+    const host = this.$(".ow-globe-host"), coords = window.SunflowerGlobeMath?.coords || (() => [0, 0]);
+    try { this.globe ??= new TravelGlobe(host, { coords, low: this.quality === "low", onClose: () => this.closeGlobe(), onPick: id => this.travelTo(id) }); }
+    catch (err) { console.warn(err); return this.toast("The navigator needs WebGL."); }
+    const f = this.focusPos(), here = this.world.districtAt(f.x, f.z, 40) || this.world.nearestDistrict(f.x, f.z);
+    this.keys.clear(); this.globeOpen = true; this.sfx.tone([392, 523, 784], .5, "sine", .07, .07);
+    this.globe.open({ places: this.config.places, visited: this.config.visited, currentId: here?.id });
+  }
+  closeGlobe() { this.globeOpen = false; this.lastT = performance.now(); }
+  travelTo(id) {
+    this.globeOpen = false; this.lastT = performance.now(); this.sfx.tone([784, 1046, 1568], .6, "triangle", .07, .06);
+    const p = this.config.places.find(v => v.id === id); if (!p) return;
+    this.opts.onTravel?.(id);
+    const d = this.world.districts.find(v => v.id === id);
+    if (d) this.fastTravel(d);
+    else { this.config.currentId = id; this.open({ ...this.config, scope: p.country, currentId: id }); }
   }
 
   /* ---------------- HUD ---------------- */
@@ -643,7 +664,7 @@ export class MindyOpenWorld {
     if (d !== this.lastDistrict) { if (d) this.banner(d); this.lastDistrict = d; }
     this.$(".ow-where").textContent = d ? `${d.place.city}, ${d.place.country}` : (() => { const n = this.world.nearestDistrict(f.x, f.z); return n ? `Countryside near ${n.place.city}` : ""; })();
     const it = this.nearest(), prompt = this.$(".ow-prompt"), eb = this.$(".ow-tb-e");
-    let text = ""; if (it) text = it.type === "portal" ? `<kbd>E</kbd> Enter the ${it.district.place.city} guild district` : `<kbd>E</kbd> Open the ${it.district.place.city} diary (${this.config.diaryCount?.(it.district.id) || 0} pages)`;
+    let text = ""; if (it) text = it.type === "portal" ? `<kbd>E</kbd> Open the journey navigator — travel anywhere` : `<kbd>E</kbd> Open the ${it.district.place.city} diary (${this.config.diaryCount?.(it.district.id) || 0} pages)`;
     if (!this.driving && !it) { const car = this.cars.find(c => Math.hypot(c.x - this.p.x, c.z - this.p.z) < 4.2); if (car) text = `<kbd>F</kbd> ${car.mine ? "Get in your car" : car.traffic ? "Borrow this car" : "Get in"}`; }
     if (this.driving && Math.abs(this.driving.vf) < 2) text = `<kbd>F</kbd> Get out`;
     if (text !== this.lastPrompt) { this.lastPrompt = text; prompt.innerHTML = text; prompt.hidden = !text; }
@@ -661,12 +682,13 @@ export class MindyOpenWorld {
     if (!this.running) return; this.raf = requestAnimationFrame(this.frame);
     if (!this.world || !this.$(".ow-loading").hidden && !this.$(".ow-loading").classList.contains("ow-fade")) return;
     const dt = Math.min(.05, (now - this.lastT) / 1000 || 0); this.lastT = now; this.time += dt;
+    if (this.globeOpen) { this.sfx.engineAt(false, 0, 0); return; }
     const paused = this.blocked() || !this.$(".ow-mapview").hidden || !this.$(".ow-help").hidden;
     if (paused) { this.keys.clear(); this.sfx.engineAt(!!this.driving, 0, 0); }
     else if (this.driving) this.updateDrive(dt); else this.updateWalk(dt);
     if (now - this.lastSlow > 400) { this.lastSlow = now; this.updateDistrictsSlow(); }
     this.updateTraffic(paused ? 0 : dt); this.updatePeds(paused ? 0 : dt); this.updateCollectibles(dt);
-    for (const d of this.world.districts) if (d.group.visible) { d.portal.disc.rotation.z -= dt * 1.2; d.book.position.y = 1.9 + Math.sin(this.time * 2 + d.x) * .08; }
+    for (const d of this.world.districts) if (d.group.visible) { d.portal.disc.rotation.z -= dt * 1.2; d.portal.orb.rotation.y += dt * .8; d.portal.orb.rotation.x = .4; d.book.position.y = 1.9 + Math.sin(this.time * 2 + d.x) * .08; }
     this.beam.material.uniforms.uTime.value = this.time;
     if (this.target) { if (now - (this.routeAt || 0) > 1200) { this.routeAt = now; this.computeRoute(); } const f = this.focusPos(); if (Math.hypot(f.x - this.target.x, f.z - this.target.z) < 30) { this.toast(`You've arrived in ${this.target.place.city}`); this.setTarget(null); } }
     this.updateSky(dt); this.updateCamera(dt);

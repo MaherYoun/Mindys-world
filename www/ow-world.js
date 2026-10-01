@@ -322,7 +322,9 @@ export class World {
     B.solid.box(px, .1, pz, 7, .4, 2.4, "#6a6480"); for (const s of [-1, 1]) B.solid.cyl(px + s * 3, .5, pz, .35, 5.2, "#6a6480", 8);
     const ringMesh = new THREE.Mesh(new THREE.TorusGeometry(2.4, .16, 10, 40), this.mats.portalRing); ringMesh.position.set(px, 3.1, pz);
     const disc = new THREE.Mesh(new THREE.CircleGeometry(2.3, 40), this.mats.portal); disc.position.set(px, 3.1, pz);
-    d.portal = { x: px, z: pz, ring: ringMesh, disc }; this.addCircle(px - 3, pz, .5); this.addCircle(px + 3, pz, .5);
+    this.orbGeo ||= new THREE.IcosahedronGeometry(1.15, 2); this.orbMat ||= new THREE.MeshBasicMaterial({ color: "#7ff8ff", wireframe: true, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+    const orb = new THREE.Mesh(this.orbGeo, this.orbMat); orb.position.set(px, 3.1, pz);
+    d.portal = { x: px, z: pz, ring: ringMesh, disc, orb }; this.addCircle(px - 3, pz, .5); this.addCircle(px + 3, pz, .5);
     this.interactions.push({ type: "portal", district: d, x: px, z: pz - 1.8, r: 3.2 }, { type: "portal", district: d, x: px, z: pz + 1.8, r: 3.2 });
     // Diary lantern kiosk
     const kx = cx + 16, kz = cz;
@@ -342,7 +344,7 @@ export class World {
     const g = new THREE.Group();
     g.add(B.facade.mesh(this.mats.facade), B.glass.mesh(this.mats.glass), B.solid.mesh(this.mats.solid), B.metal.mesh(this.mats.metal), B.neon.mesh(this.mats.neon, false));
     for (const k of ["streetX", "streetZ", "ring", "plaza"]) { const m = B[k].mesh(this.mats[k], false); m.castShadow = false; g.add(m); }
-    g.add(ringMesh, disc, d.book);
+    g.add(ringMesh, disc, orb, d.book);
     d.group = g; this.group.add(g);
   }
   buildLandmark(B, d, r) {
