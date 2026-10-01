@@ -1,11 +1,11 @@
 {
   "name": "mindys-world",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "description": "A personal travel story game for web and mobile",
   "scripts": {
     "serve": "python -m http.server 8080 --directory www",
-    "test": "node tests/sync-smoke.cjs && node tests/world-smoke.cjs && node tests/globe-smoke.cjs && node tests/atlas-ui-smoke.cjs",
+    "test": "node tests/sync-smoke.cjs && node tests/world-smoke.cjs && node tests/globe-smoke.cjs && node tests/atlas-ui-smoke.cjs && node --no-warnings tests/openworld-plan.mjs",
     "android": "cap open android",
     "ios": "cap open ios"
   },

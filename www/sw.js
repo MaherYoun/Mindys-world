@@ -1,5 +1,5 @@
-const CACHE = "mindys-world-v9";
-const FILES = ["./", "./index.html", "./styles.css", "./world.css", "./globe.css", "./mind.css", "./config.js", "./cloud.js", "./data.js", "./world3d.js", "./globe.js", "./app.js", "./assets/earth-day.webp", "./assets/earth-day-mobile.webp", "./assets/earth-game-map.webp", "./assets/earth-clouds.webp", "./assets/earth-night.webp", "./assets/adventure-loop.mp3", "./privacy.html", "./delete-account.html", "./reset.html", "./account-pages.css", "./account-pages.js", "./manifest.webmanifest", "./icons/sunflower-emoji.svg", "./icons/icon-192.png", "./icons/icon-512.png"];
+const CACHE = "mindys-world-v10";
+const FILES = ["./", "./index.html", "./styles.css", "./world.css", "./globe.css", "./mind.css", "./config.js", "./cloud.js", "./data.js", "./world3d.js", "./globe.js", "./app.js", "./openworld.js", "./ow-assets.js", "./ow-world.js", "./openworld.css", "./vendor/three.module.min.js", "./assets/earth-day.webp", "./assets/earth-day-mobile.webp", "./assets/earth-game-map.webp", "./assets/earth-clouds.webp", "./assets/earth-night.webp", "./assets/adventure-loop.mp3", "./privacy.html", "./delete-account.html", "./reset.html", "./account-pages.css", "./account-pages.js", "./manifest.webmanifest", "./icons/sunflower-emoji.svg", "./icons/icon-192.png", "./icons/icon-512.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });

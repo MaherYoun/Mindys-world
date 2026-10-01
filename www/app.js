@@ -154,9 +154,9 @@
   function renderAll(){if(!$("gameLayout").hidden)world?.load(place());renderFilters();renderPlaceList();renderScene();renderStory();renderMindy();renderCompanion();renderDiaryTeaser();renderGlobePanel();globe?.refresh();if($("worldMapDialog").open)renderMap();if($("journeyDialog").open)renderJourney();}
   function showGlobe(){hideMobile();$("gameLayout").hidden=true;$("globeScreen").hidden=false;document.documentElement.classList.add("globe-active");world?.setActive(false);globe?.setActive(true);renderGlobePanel();globe?.refresh();window.scrollTo({top:0,behavior:"smooth"});}
   function enterCity(){$("globeScreen").hidden=true;$("gameLayout").hidden=false;document.documentElement.classList.remove("globe-active");globe?.setActive(false);world?.load(place());world?.setActive(true);startMusic();}
-  function chooseCountry(country){globeCountry=country;globeQuery="";$("globeSearch").value="";globe?.setCountry(country);const p=places().find(v=>v.country===country);const center=window.SunflowerGlobeMath.centroids[country]||window.SunflowerGlobeMath.coords(p);globe?.focus(...center);renderGlobePanel();startMusic();}
-  function renderGlobePanel(){const countries=$("globeCountryList"),cities=$("globeCityList"),q=globeQuery;countries.replaceChildren();cities.replaceChildren();$("globeAllCountries").hidden=!globeCountry;$("globeDrawerTitle").textContent=globeCountry||"Choose a country";$("globeDrawerCaption").textContent=globeCountry?"Choose a city to enter its walkable guild world.":"Turn the Earth or choose from your journey below.";countries.hidden=!!globeCountry;cities.hidden=!globeCountry;
-    if(globeCountry){const found=places().filter(p=>p.country===globeCountry&&(!q||p.city.toLocaleLowerCase().includes(q)));for(const p of found){const b=document.createElement("button"),dot=document.createElement("span"),name=document.createElement("span"),side=document.createElement("small");b.className=`globe-place${state.visited[p.id]?" visited":""}`;dot.className="globe-dot";name.textContent=p.city;side.textContent=state.visited[p.id]?"Visited":"Enter →";b.append(dot,name,side);b.addEventListener("click",()=>selectPlace(p.id));cities.append(b);}if(!found.length){const el=document.createElement("p");el.className="list-empty";el.textContent="No cities match. Add a place below.";cities.append(el);}}
+  function chooseCountry(country){globeCountry=country;globeQuery="";$("globeSearch").value="";globe?.setCountry(country);const p=places().find(v=>v.country===country);const center=window.SunflowerGlobeMath.centroids[country]||window.SunflowerGlobeMath.coords(p);globe?.focus(...center);renderGlobePanel();startMusic();clearTimeout(chooseCountry.t);chooseCountry.t=setTimeout(()=>{if(!$("globeScreen").hidden)launchOpenWorld(country);},650);}
+  function renderGlobePanel(){const countries=$("globeCountryList"),cities=$("globeCityList"),q=globeQuery;countries.replaceChildren();cities.replaceChildren();$("globeAllCountries").hidden=!globeCountry;$("globeDrawerTitle").textContent=globeCountry||"Choose a country";$("globeDrawerCaption").textContent=globeCountry?"Opening its 3D world… or choose a city to start there.":"Turn the Earth or choose from your journey below.";countries.hidden=!!globeCountry;cities.hidden=!globeCountry;
+    if(globeCountry){const found=places().filter(p=>p.country===globeCountry&&(!q||p.city.toLocaleLowerCase().includes(q)));for(const p of found){const b=document.createElement("button"),dot=document.createElement("span"),name=document.createElement("span"),side=document.createElement("small");b.className=`globe-place${state.visited[p.id]?" visited":""}`;dot.className="globe-dot";name.textContent=p.city;side.textContent=state.visited[p.id]?"Visited ✓":"Explore →";b.append(dot,name,side);b.addEventListener("click",()=>launchOpenWorld(p.country,p.id));cities.append(b);}if(!found.length){const el=document.createElement("p");el.className="list-empty";el.textContent="No cities match. Add a place below.";cities.append(el);}}
     else{const names=[...new Set(places().map(p=>p.country))].filter(name=>!q||name.toLocaleLowerCase().includes(q)||places().some(p=>p.country===name&&p.city.toLocaleLowerCase().includes(q)));for(const country of names){const group=places().filter(p=>p.country===country),b=document.createElement("button"),dot=document.createElement("span"),name=document.createElement("span"),side=document.createElement("small"),visited=group.filter(p=>state.visited[p.id]).length;b.className=`globe-place${visited?" visited":""}`;dot.className="globe-dot";name.textContent=country;side.textContent=visited?`${visited} visited`:`${group.length} ${group.length===1?"city":"cities"}`;b.append(dot,name,side);b.addEventListener("click",()=>chooseCountry(country));countries.append(b);}if(!names.length){const el=document.createElement("p");el.className="list-empty";el.textContent="No countries match. Add one below.";countries.append(el);}}
   }
   const MUSIC_KEY="sunflower-music-v1";
@@ -192,6 +192,26 @@
     const shown=visited.length?visited:[place()];for(const p of shown){const button=document.createElement("button"),title=document.createElement("strong"),location=document.createElement("small"),detail=document.createElement("span"),pages=state.diaries[p.id]?.length||0;button.className="journey-card";button.type="button";title.textContent=p.city;location.textContent=`${p.country} · ${p.region}`;detail.textContent=state.visited[p.id]?`${pages} ${pages===1?"diary page":"diary pages"} · revisit →`:`Here now · mark this place visited when you wish`;button.append(title,location,detail);button.addEventListener("click",()=>{$("journeyDialog").close();selectPlace(p.id);});cards.append(button);}
   }
   function showJourney(){renderJourney();showDialog("journeyDialog");}
+  // Mindy's open world: one continuous 3D world made of every visited place.
+  let openWorld=null,openWorldReturn="globe",openWorldFailed=false;
+  const openWorldDialogs=["authDialog","settingsDialog","addPlaceDialog","diaryDialog","companionDialog","mindyDialog","helpDialog","worldMapDialog","whatIfDialog","journeyDialog"];
+  function launchOpenWorld(scope,startId){
+    if(typeof scope!=="string")scope=null;if(startId&&places().some(p=>p.id===startId)){state.selected=startId;activeRegion=place().region;save();}
+    scope=scope||place().country;const start=startId||(place().country===scope?place().id:places().find(p=>p.country===scope)?.id);
+    if(!window.MindyOpenWorld||openWorldFailed){if(startId)selectPlace(startId);else toast("The 3D open world isn't available on this device yet.");return;}
+    openWorldReturn=$("gameLayout").hidden?"globe":"city";hideMobile();world?.setActive(false);globe?.setActive(false);
+    $("openWorldScreen").hidden=false;document.documentElement.classList.add("ow-active");
+    try{openWorld??=new window.MindyOpenWorld($("openWorldScreen"),{
+      blockControls:()=>openWorldDialogs.some(id=>$(id).open)||/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||""),
+      soundOn:()=>musicEnabled,
+      onExit:()=>closeOpenWorld(),
+      onEnterPlace:id=>{closeOpenWorld("none");selectPlace(id);toast(`Welcome to ${place().city}.`);},
+      onDiary:id=>{if(state.selected!==id){state.selected=id;activeRegion=place().region;save();renderAll();}openDiary();}
+    });}catch(error){console.warn("Open world unavailable.",error);openWorldFailed=true;closeOpenWorld();toast("The open world needs WebGL on this device.");return;}
+    openWorld.open({places:places(),scope,visited:{...state.visited},currentId:start,mindy:state.mindy,companion:id=>state.companions[id]||defaultCompanion(id),diaryCount:id=>state.diaries[id]?.length||0});
+    startMusic();
+  }
+  function closeOpenWorld(to){openWorld?.close();$("openWorldScreen").hidden=true;document.documentElement.classList.remove("ow-active");const back=to||openWorldReturn;if(back==="city"){world?.setActive(true);}else if(back==="globe"){globe?.setActive(true);globe?.refresh();}}
   function travelTo(id){$("worldMapDialog").close();selectPlace(id);toast(`Welcome to ${place().city}.`);}
   let authMode="signin";
   function updateAuthUI(signed,email){$("cloudButton").textContent=signed?"Account":"Sync";$("accountStatus").textContent=signed?`Signed in as ${email}`:"Playing on this device";$("accountButton").textContent=signed?"Sign out":"Sign in to sync";$("syncNowButton").hidden=!signed;$("deleteAccountButton").hidden=!signed;}
@@ -239,6 +259,8 @@
     $("addPlaceButton").addEventListener("click",addPlace);$("settingsAddPlace").addEventListener("click",()=>{$("settingsDialog").close();addPlace();});
     $("addPlaceForm").addEventListener("submit",e=>{e.preventDefault();const f=e.currentTarget.elements,p={id:`custom-${uid()}`,city:f.city.value.trim().slice(0,48),country:f.country.value.trim().slice(0,48),region:f.region.value};if(!p.city||!p.country)return;state.customPlaces.push(p);$("addPlaceDialog").close();selectPlace(p.id);toast("A new place was added.");});
     $("howButton").addEventListener("click",()=>showDialog("helpDialog"));
+    for(const id of ["openWorldButton","cityOpenWorld"])$(id)?.addEventListener("click",()=>launchOpenWorld());
+    $("globeOpenWorld").addEventListener("click",()=>launchOpenWorld("all"));
     document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>$(b.dataset.close).close()));
     $("openAtlas").addEventListener("click",()=>{$("atlasPanel").classList.add("open");setMobileActive("mobileAtlas");});$("mobileAtlas").addEventListener("click",showGlobe);$("closeAtlas").addEventListener("click",hideMobile);
     $("mobileStory").addEventListener("click",hideMobile);$("mobileCompanion").addEventListener("click",()=>{$("atlasPanel").classList.remove("open");document.querySelector(".memory-panel").classList.add("mobile-open");setMobileActive("mobileCompanion");});$("mobileDiary").addEventListener("click",()=>{hideMobile();openDiary();});
@@ -260,7 +282,7 @@
     });
     document.documentElement.classList.add("world-ready");
   }catch(error){console.warn("3D world unavailable; story scene remains playable.",error);}
-  try{globe=new window.SunflowerGlobe($("globeCanvas"),$("globeMarkers"),{getPlaces:places,getVisited:()=>state.visited,onCountry:chooseCountry,onCity:selectPlace,onGesture:startMusic,onFailure:globeUnavailable});}catch(error){console.warn("3D globe unavailable; country list remains playable.",error);globeUnavailable();}
+  try{globe=new window.SunflowerGlobe($("globeCanvas"),$("globeMarkers"),{getPlaces:places,getVisited:()=>state.visited,onCountry:chooseCountry,onCity:id=>{const p=places().find(v=>v.id===id);if(p)launchOpenWorld(p.country,id);},onGesture:startMusic,onFailure:globeUnavailable});}catch(error){console.warn("3D globe unavailable; country list remains playable.",error);globeUnavailable();}
   if(!localStorage.getItem("sunflower-migrated-v1")){cloud.enqueue(diffState(initial(),state));localStorage.setItem("sunflower-migrated-v1","1");}
   populateOptions();wire();updateMusicButton();updateGlobeClock();setInterval(updateGlobeClock,30000);if(!places().some(p=>p.id===state.selected))state.selected=defaultId;activeRegion=place().region;world?.setActive(false);globe?.setActive(true);document.documentElement.classList.add("globe-active");renderAll();cloud.init();
   if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});

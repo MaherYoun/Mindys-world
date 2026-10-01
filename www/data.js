@@ -17,7 +17,7 @@
     "The Americas": {
       "Mexico": "Mexico City|Oaxaca|Playa del Carmen",
       "Belize": "Belize",
-      "Guatemala": "Antigua|Lake Atitlán",
+      "Guatemala": "Antigua|Lake Atitlán|Tikal",
       "El Salvador": "Santa Ana|San Salvador",
       "Honduras": "Copán",
       "Nicaragua": "Nicaragua",
@@ -41,6 +41,7 @@
       "Poland": "Warsaw|Kraków",
       "Czechia": "Prague",
       "Slovakia": "Bratislava|Poprad|Košice",
+      "Ukraine": "Lviv|Kyiv",
       "Moldova": "Chișinău",
       "Romania": "Bucharest|Sibiu|Sighișoara|Cluj-Napoca",
       "Hungary": "Budapest|Pécs",
@@ -57,7 +58,7 @@
       "Bulgaria": "Sofia|Plovdiv"
     },
     "Caucasus": {
-      "Turkey": "Istanbul|Izmir|Antalya|Cappadocia",
+      "Turkey": "Istanbul|Izmir|Selçuk|Pamukkale|Antalya|Cappadocia",
       "Azerbaijan": "Baku|Sheki",
       "Georgia": "Tbilisi|Kazbegi",
       "Armenia": "Yerevan|Dilijan|Tatev"

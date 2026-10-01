@@ -53,7 +53,7 @@ const beforeSave=JSON.parse(values.get("sunflower-atlas-v1"));assert.equal(Objec
 nodes.get("whatIfDiary").click();const afterSave=JSON.parse(values.get("sunflower-atlas-v1"));assert.equal(afterSave.diaries["east-asia-china-beijing"][0].body,"A thought I noticed: Maybe I made the wrong choice\n\nOne small step: Call a friend");nodes.get("diaryDialog").close();
 assert(nodes.get("adventureMusic").plays>0);nodes.get("soundButton").click();assert(nodes.get("adventureMusic").pauses>0);
 nodes.get("backToGlobe").click();assert.equal(nodes.get("gameLayout").hidden,true);
-nodes.get("routeIndexButton").click();assert.equal(nodes.get("worldMapDialog").open,true);assert.equal(nodes.get("mapPlaceList").children.length,173);
+nodes.get("routeIndexButton").click();assert.equal(nodes.get("worldMapDialog").open,true);assert.equal(nodes.get("mapPlaceList").children.length,178);
 assert.equal(fake2d.lastImage.w,700,"the game map fills its board");
 nodes.get("mapSearch").value="beijing";nodes.get("mapSearch").dispatch("input");assert.equal(nodes.get("mapPlaceList").children.length,1);
 const [lat,lon]=ctx.window.SunflowerGlobeMath.coords({id:"east-asia-china-beijing",city:"Beijing",country:"China",region:"East Asia"});

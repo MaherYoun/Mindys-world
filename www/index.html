@@ -19,6 +19,9 @@
   <script src="./world3d.js" defer></script>
   <script src="./globe.js" defer></script>
   <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="./openworld.css">
+  <link rel="modulepreload" href="./vendor/three.module.min.js">
+  <script type="module" src="./openworld.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -26,6 +29,7 @@
       <div class="brand"><span class="brand-mark" aria-hidden="true">🌻</span><span><strong>MINDY'S WORLD</strong><small>A LITTLE GUILD, A WIDE WORLD</small></span></div>
       <div class="top-actions">
         <span class="save-indicator" id="saveIndicator">Saved on this device</span>
+        <button class="sync-button ow-launch" id="openWorldButton" type="button" title="Walk and drive through every place Mindy has visited">🌆 Open world</button>
         <button class="sync-button pause-button" id="pauseButton" type="button" aria-label="Open the What-If Lantern" title="The What-If Lantern">✦ What-If Lantern</button>
         <button class="sync-button sound-button" id="soundButton" type="button" aria-label="Turn music off" aria-pressed="true">♫ Music on</button>
         <button class="sync-button" id="cloudButton">Sync</button>
@@ -45,6 +49,7 @@
         <span class="eyebrow">GUILD NAVIGATION</span><div class="globe-drawer-heading"><h2 id="globeDrawerTitle">Choose a country</h2><button id="globeAllCountries" type="button" hidden>← Countries</button></div>
         <p id="globeDrawerCaption">Your route is here whenever you need it.</p>
         <label class="globe-search">⌕ <input id="globeSearch" type="search" placeholder="Search countries or cities" aria-label="Search countries or cities"></label>
+        <button id="globeOpenWorld" class="globe-add ow-launch" type="button">🌆 Explore the whole journey in 3D</button>
         <div id="globeCountryList" class="globe-list"></div><div id="globeCityList" class="globe-list" hidden></div>
         <button id="globeAddPlace" class="globe-add" type="button">＋ Add a country or city</button>
       </aside>
@@ -60,7 +65,7 @@
       </aside>
 
       <main class="main-panel" id="mainPanel">
-        <div class="chapter-topline"><button class="menu-button" id="openAtlas" aria-label="Open atlas">☰ <span>Atlas</span></button><button id="backToGlobe" class="globe-back" type="button">◈ Back to globe</button><span id="chapterTrail">THE JOURNEY CONTINUES</span><span id="chapterCount"></span></div>
+        <div class="chapter-topline"><button class="menu-button" id="openAtlas" aria-label="Open atlas">☰ <span>Atlas</span></button><button id="backToGlobe" class="globe-back" type="button">◈ Back to globe</button><button id="cityOpenWorld" class="globe-back ow-launch" type="button">🌆 Open world</button><span id="chapterTrail">THE JOURNEY CONTINUES</span><span id="chapterCount"></span></div>
         <div class="scene" id="scene" role="group" aria-label="Interactive story scene">
           <canvas id="worldCanvas" class="world-canvas" aria-label="Walkable 3D fantasy city"></canvas>
           <div class="scene-sky" id="sceneSky"></div>
@@ -96,6 +101,7 @@
         <div class="small-guild-note"><span aria-hidden="true">✦</span><p id="guildNote">“You can take your time. The world is still here.”</p></div>
       </aside>
     </div>
+    <div id="openWorldScreen" hidden></div>
     <nav class="mobile-nav" aria-label="Main actions"><button id="mobileAtlas">⌖<span>Map</span></button><button id="mobileStory" class="active">✺<span>World</span></button><button id="mobileCompanion">◉<span>Looks</span></button><button id="mobileDiary">✎<span>Diary</span></button></nav>
   </div>
 
